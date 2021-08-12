@@ -54,7 +54,7 @@ Fg=double(int(-g*psi,xi,0,L));
 
 F2Q_xi0=double(subs(psi,xi,0));
 M2Q_xi0=double(subs(dpsi,xi,0));
-F2Q_xiL=double(subs(psi,xi,0));
+F2Q_xiL=double(subs(psi,xi,L));
 %% Assign Paramters to the Model
 mdlWks = get_param('BarrelControl','ModelWorkspace');
 clear(mdlWks)
