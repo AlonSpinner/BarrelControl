@@ -1,10 +1,10 @@
 %% Initalize 
 syms xi real
-L=3; %m
+L=5; %m
 rho=8e3; %kg/m^3
-E=210e9; %210Gpa
-rm_in=30e-3;
-rm_out=45e-3 - 5e-3*xi/L; %m, symbolic
+E=0.4*1*210e9; %210Gpa
+rm_in=15e-3;
+rm_out=25e-3- 5e-3*xi/L; %m, symbolic
 
 %Calculating area and moment of inertia
 A=pi*(rm_out^2 -rm_in^2); %m^2
@@ -54,7 +54,8 @@ Fg=double(int(-g*psi,xi,0,L));
 
 F2Q_xi0=double(subs(psi,xi,0));
 M2Q_xi0=double(subs(dpsi,xi,0));
-F2Q_xiL=double(subs(psi,xi,0));
+
+F2Q_xi=
 %% Assign Paramters to the Model
 mdlWks = get_param('BarrelControl','ModelWorkspace');
 clear(mdlWks)
@@ -70,14 +71,10 @@ assignin(mdlWks,'Lambda',Lambda);
 assignin(mdlWks,'Gama',Gama);
 assignin(mdlWks,'psi_0',double(subs(psi,0)));
 assignin(mdlWks,'dpsi_0',double(subs(dpsi,0)));
-assignin(mdlWks,'dpsi_Ldiv8',double(subs(dpsi,L/8)));
 assignin(mdlWks,'psi_L',double(subs(psi,L)));
 assignin(mdlWks,'dpsi_L',double(subs(dpsi,L)));
 assignin(mdlWks,'Fg',Fg);
 assignin(mdlWks,'F2Q_xi0',F2Q_xi0);
-assignin(mdlWks,'F2Q_xiL',F2Q_xiL);
 assignin(mdlWks,'M2Q_xi0',M2Q_xi0);
 %% need to write down manualy:
-proj = matlab.project.rootProject;
-rootFolder=proj.RootFolder;
-f_psi=matlabFunction(psi,'File',fullfile(rootFolder,'Scripts And Functions','computePsi')); %to drawing Sfcn
+f_psi=matlabFunction(psi); %to drawing Sfcn
