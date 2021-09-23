@@ -9,45 +9,27 @@ rm_out=45e-3 - 5e-3*xi/L; %m, symbolic
 %Calculating area and moment of inertia
 A=pi*(rm_out^2 -rm_in^2); %m^2
 I=pi/4*(rm_out^4-rm_in^4); %m^2
-
 Mass=double(int(A*rho,0,L));
-%% Calculating Matrices
-%Number of base functions for rayligh ritz
+
+%additional parameters
+zeta=0.05;
 n=8;
 
+%shape function and derivative
 psi=Chebypoly(xi,n,0,L);
 dpsi=diff(psi,xi);
 ddpsi=diff(dpsi,xi);
 
-K=double(E*int(I*(ddpsi*ddpsi'),0,L));
-M=double(rho*int(A*(psi*psi'),0,L));
-
+%constraints
 c = double([
 %     [subs(psi',xi,0)]; %w(0)=0
     [subs(psi',xi,L/8)]; %w(L/8)=0
 %     [subs(dpsi',xi,0)]; %w'(0)=0
             ]);
 C=null(c,'r');
-
-%Apply constraints on matrices
-Kc=C'*K*C;
-Mc=C'*M*C;
-
-%ensure symmatrey
-Kc=0.5*(Kc+Kc');
-Mc=0.5*(Mc+Mc');
-
-[PHI,wr2]=eig(Kc,Mc); %solves Av=lambda*Bv ~ K-(wn^2)*M
-wr=sqrt(diag(wr2));
-wrMat(1:length(wr),n)=wr;
-
-[s_wr,Indx]=sort(wr); %sort
-s_wr=abs(s_wr'); %abs or real?
-s_PHI=PHI(:,Indx); %PHI to work with
-
-zeta=0.05;
-Gama=diag(2*zeta*s_wr);
-Lambda=diag(s_wr.^2);
+%% Calculating Matrices
+%Number of base functions for rayligh ritz
+[Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,n,C);
 
 g=9.81;
 Fg=double(int(-g*psi,xi,0,L));
@@ -81,3 +63,27 @@ assignin(mdlWks,'M2Q_xi0',M2Q_xi0);
 proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;
 f_psi=matlabFunction(psi,'File',fullfile(rootFolder,'Scripts And Functions','computePsi')); %to drawing Sfcn
+
+function [Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,n,C)
+K=double(E*int(I*(ddpsi*ddpsi'),0,L));
+M=double(rho*int(A*(psi*psi'),0,L));
+
+%Apply constraints on matrices
+Kc=C'*K*C;
+Mc=C'*M*C;
+
+%ensure symmatrey
+Kc=0.5*(Kc+Kc');
+Mc=0.5*(Mc+Mc');
+
+[PHI,wr2]=eig(Kc,Mc); %solves Av=lambda*Bv ~ K-(wn^2)*M
+wr=sqrt(diag(wr2));
+wrMat(1:length(wr),n)=wr;
+
+[s_wr,Indx]=sort(wr); %sort
+s_wr=abs(s_wr'); %abs or real?
+s_PHI=PHI(:,Indx); %PHI to work with
+
+Gama=diag(2*zeta*s_wr);
+Lambda=diag(s_wr.^2);
+end
