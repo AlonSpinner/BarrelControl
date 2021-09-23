@@ -25,7 +25,7 @@ block.InputPort(1).SamplingMode   ='Sample';
 %q
 block.InputPort(2).Complexity     ='Real';
 block.InputPort(2).DataTypeId     =-1;
-block.InputPort(2).Dimensions     = 8;
+block.InputPort(2).Dimensions     = 4;
 block.InputPort(2).SamplingMode   ='Sample';
 
 %Time
