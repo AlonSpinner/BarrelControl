@@ -5,5 +5,6 @@ When aiming, it is best to control the angle at the tip, rather than the angle a
 2) Implemented controller
 3) No sensor dynamics
 4) Online Visualization
+5) Kalman filter for tip angle estimation
 
 ![Alt text](/System.jpg?raw=true "System")
