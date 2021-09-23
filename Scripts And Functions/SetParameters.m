@@ -42,6 +42,7 @@ F2Q_xiL=double(subs(psi,xi,L));
 
 psi_0=double(subs(psi,0));
 dpsi_0=double(subs(dpsi,0));
+psi_Ldiv8=double(subs(psi,L/8));
 dpsi_Ldiv8=double(subs(dpsi,L/8));
 psi_L=double(subs(psi,L));
 dpsi_L=double(subs(dpsi,L));
@@ -79,7 +80,7 @@ kmr_C=d_kalman_sys.C;
 kmr_D=d_kalman_sys.D;
 
 Nw=size(kmr_A,2); %amount of values in state
-Ny=1; %measurements size
+Ny=size(kmr_C,1); %measurements size
 kmr_Q = eye(Nw,Nw); %process covaraince matrix
 kmr_R = eye(Ny); %measurement covariance matrix
 kmr_N = zeros(Nw,Ny);%noise cross covaraince matrix, between process and measurement noise
