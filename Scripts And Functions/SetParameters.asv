@@ -43,17 +43,13 @@ F2Q_xiL=double(subs(psi,xi,L));
 nk=npsi-nc;
 Kalman_A=[zeros(nk), eye(nk);
         -Lambda, -Gama];
-Kalman_B=blkdiag(zeros(nk),eye(nk));
+Kalman_B=[zeros(nk); eye(nk)];
 Kalman_C=blkdiag(zeros(nk),eye(nk));
 Kalman_D=blkdiag(zeros(nk),zeros(nk));
 
-Ny=1; %measurements size
-Nw=2*nk; %state space size
-Kalman_Q = eye(Nw,Nw); %process covaraince matrix
-Kalman_R = eye(Ny); %measurement covariance matrix
-Kalman_N = zeros(Nw,Nw);%noise cross covaraince matrix, between process and measurement noise
-
-eta0=zeros(Nw,1);
+Kalman_Q = eye(size(Kalman_A)); %process covaraince matrix
+Kalman_R = 1; %measurement covariance matrix
+Kalman_N = zeros(Ny,Nw) %noise cross covaraince matrix, between process and measurement noise
 %% Assign Paramters to the Model
 mdlWks = get_param('BarrelControl','ModelWorkspace');
 clear(mdlWks)
@@ -67,27 +63,19 @@ assignin(mdlWks,'C',C);
 assignin(mdlWks,'PHI',s_PHI);
 assignin(mdlWks,'Lambda',Lambda);
 assignin(mdlWks,'Gama',Gama);
-
 assignin(mdlWks,'psi_0',double(subs(psi,0)));
 assignin(mdlWks,'dpsi_0',double(subs(dpsi,0)));
 assignin(mdlWks,'dpsi_Ldiv8',double(subs(dpsi,L/8)));
 assignin(mdlWks,'psi_L',double(subs(psi,L)));
 assignin(mdlWks,'dpsi_L',double(subs(dpsi,L)));
-
 assignin(mdlWks,'Fg',Fg);
 assignin(mdlWks,'F2Q_xi0',F2Q_xi0);
 assignin(mdlWks,'F2Q_xiL',F2Q_xiL);
 assignin(mdlWks,'M2Q_xi0',M2Q_xi0);
-
 assignin(mdlWks,'Kalman_A',Kalman_A);
 assignin(mdlWks,'Kalman_B',Kalman_B);
 assignin(mdlWks,'Kalman_C',Kalman_C);
 assignin(mdlWks,'Kalman_D',Kalman_D);
-assignin(mdlWks,'Kalman_Q',Kalman_Q);
-assignin(mdlWks,'Kalman_R',Kalman_R);
-assignin(mdlWks,'Kalman_N',Kalman_N);
-assignin(mdlWks,'eta0',eta0);
-assignin(mdlWks,'nk',nk);
 %% need to write down manualy:
 proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;
