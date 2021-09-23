@@ -81,7 +81,7 @@ kmr_D=d_kalman_sys.D;
 
 Nw=size(kmr_A,2); %amount of values in state
 Ny=size(kmr_C,1); %measurements size
-kmr_Q = eye(Nw,Nw); %process covaraince matrix
+kmr_Q = 100*eye(Nw,Nw); %process covaraince matrix
 kmr_R = eye(Ny); %measurement covariance matrix
 kmr_N = zeros(Nw,Ny);%noise cross covaraince matrix, between process and measurement noise
 
