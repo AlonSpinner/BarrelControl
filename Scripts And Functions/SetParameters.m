@@ -16,6 +16,8 @@ zeta=0.05;
 npsi=4; %number of base functions
 ts_controller=1/1000; %[s]
 
+minModalDamp=2*zeta*(30*2*pi)/1e10;
+
 %shape function and derivative
 psi=Chebypoly(xi,npsi,0,L);
 dpsi=diff(psi,xi);
@@ -31,7 +33,7 @@ nc=size(c,1); %number of constraints
 C=null(c,'r');
 %% Calculating Model Matrices
 %Number of base functions for rayligh ritz
-[Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C);
+[Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 g=9.81;
 Fg=double(int(-g*rho*A*psi,xi,0,L));
@@ -55,20 +57,12 @@ dpsi_L=double(subs(dpsi,L));
 %measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
 nk=npsi-nc;
 
-kalman_A_full=[zeros(nk), eye(nk);
-        -Lambda, -Gama];
-kalman_B_full=[zeros(nk);eye(nk)];
-kalman_C_full=dpsi_Ldiv8'*C*s_PHI*[zeros(nk),eye(nk)];
-kalman_D_full=zeros(1,nk);
-kalman_sys_full=ss(kalman_A_full,kalman_B_full,kalman_C_full,kalman_D_full);
-disp(tf(kalman_sys_full)); %<--- from here we learn of the pure integration mode, wr=0
-
-nk=nk-1; %remove pure integration mode to enable matlab's kalman filter
 kalman_A=[zeros(nk), eye(nk);
-        -Lambda(2:end,2:end), -Gama(2:end,2:end)];
+        -Lambda, -Gama];
 kalman_B=[zeros(nk);eye(nk)];
-kalman_C=dpsi_Ldiv8'*C*s_PHI(:,2:end)*[zeros(nk),eye(nk)];
-kalman_D=zeros(1,nk);
+kalman_C=[psi_0'*C*s_PHI*[eye(nk),zeros(nk)];
+    dpsi_Ldiv8'*C*s_PHI*[eye(nk),zeros(nk)]];
+kalman_D=zeros(size(kalman_C,1),nk);
 kalman_sys=ss(kalman_A,kalman_B,kalman_C,kalman_D);
 
 %minimal realization and make it discrete
@@ -81,7 +75,7 @@ kmr_D=d_kalman_sys.D;
 
 Nw=size(kmr_A,2); %amount of values in state
 Ny=size(kmr_C,1); %measurements size
-kmr_Q = 100*eye(Nw,Nw); %process covaraince matrix
+kmr_Q = eye(Nw,Nw); %process covaraince matrix
 kmr_R = eye(Ny); %measurement covariance matrix
 kmr_N = zeros(Nw,Ny);%noise cross covaraince matrix, between process and measurement noise
 
@@ -128,7 +122,7 @@ proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;
 f_psi=matlabFunction(psi,'File',fullfile(rootFolder,'Scripts And Functions','computePsi')); %to drawing Sfcn
 
-function [Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C)
+function [Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp)
 K=double(E*int(I*(ddpsi*ddpsi'),0,L));
 M=double(rho*int(A*(psi*psi'),0,L));
 
@@ -148,6 +142,11 @@ wrMat(1:length(wr),npsi)=wr;
 s_wr=abs(s_wr'); %abs or real?
 s_PHI=PHI(:,Indx); %PHI to work with
 
-Gama=diag(2*zeta*s_wr);
+%minModalDamp is important as without it we have a pure generalized forces integration mode.
+%which matlab can't handle in the kalman filter.
+%We could either do this or change the shape function prehaps? this seems
+%better
+damping=max(2*zeta*s_wr,minModalDamp); 
+Gama=diag(damping);
 Lambda=diag(s_wr.^2);
 end
