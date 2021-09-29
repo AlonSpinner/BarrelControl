@@ -13,11 +13,11 @@ Mass=double(int(A*rho,0,L));
 
 %additional parameters
 zeta=0.05;
-npsi=8; %number of base functions
-nkill4kalman=4; %number of modes to kill for kalman (zerofy pertubations)
+npsi=6; %number of base functions
+nkill4kalman=2; %number of modes to kill for kalman (zerofy pertubations)
 ts_controller=1/1000; %[s]
 
-minModalDamp=2*zeta*(30*2*pi)/1e10;
+minModalDamp=2*zeta*(30*2*pi)/1e13;
 
 %shape function and derivative
 psi=Chebypoly(xi,npsi,0,L);
@@ -56,7 +56,8 @@ dpsi_L=double(subs(dpsi,L));
 
 %Continous system:
 %measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
-E=1.1*E; %lie for kalman filter! :)
+E=1*E; %lie for kalman filter! :)
+A=1*A; %lie for kalman filter! :)
 [kGama,kLambda,kPHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 nk=npsi-nc;
