@@ -13,7 +13,8 @@ Mass=double(int(A*rho,0,L));
 
 %additional parameters
 zeta=0.05;
-npsi=4; %number of base functions
+npsi=8; %number of base functions
+nkill4kalman=4; %number of modes to kill for kalman (zerofy pertubations)
 ts_controller=1/1000; %[s]
 
 minModalDamp=2*zeta*(30*2*pi)/1e10;
@@ -33,7 +34,7 @@ nc=size(c,1); %number of constraints
 C=null(c,'r');
 %% Calculating Model Matrices
 %Number of base functions for rayligh ritz
-[Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
+[Gama,Lambda,PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 g=9.81;
 Fg=double(int(-g*rho*A*psi,xi,0,L));
@@ -55,13 +56,16 @@ dpsi_L=double(subs(dpsi,L));
 
 %Continous system:
 %measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
+E=1.1*E; %lie for kalman filter! :)
+[kGama,kLambda,kPHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
+
 nk=npsi-nc;
 
 kalman_A=[zeros(nk), eye(nk);
-        -Lambda, -Gama];
+        -kLambda, -kGama];
 kalman_B=[zeros(nk);eye(nk)];
-kalman_C=[psi_0'*C*s_PHI*[eye(nk),zeros(nk)];
-    dpsi_Ldiv8'*C*s_PHI*[eye(nk),zeros(nk)]];
+kalman_C=[psi_0'*C*kPHI*[eye(nk),zeros(nk)];
+    dpsi_Ldiv8'*C*kPHI*[eye(nk),zeros(nk)]];
 kalman_D=zeros(size(kalman_C,1),nk);
 kalman_sys=ss(kalman_A,kalman_B,kalman_C,kalman_D);
 
@@ -90,7 +94,7 @@ assignin(mdlWks,'L',L);
 %Dynamics
 assignin(mdlWks,'ts_controller',ts_controller); 
 assignin(mdlWks,'C',C);
-assignin(mdlWks,'PHI',s_PHI);
+assignin(mdlWks,'PHI',PHI);
 assignin(mdlWks,'Lambda',Lambda);
 assignin(mdlWks,'Gama',Gama);
 
@@ -117,6 +121,7 @@ assignin(mdlWks,'eta0',eta0);
 assignin(mdlWks,'npsi',npsi);
 assignin(mdlWks,'nc',nc);
 assignin(mdlWks,'nk',nk);
+assignin(mdlWks,'nkill4kalman',nkill4kalman);
 %% need to write down manualy:
 proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;

@@ -13,10 +13,11 @@ Mass=double(int(A*rho,0,L));
 
 %additional parameters
 zeta=0.05;
-npsi=4; %number of base functions
+npsi=8; %number of base functions
+nkill4kalman=4; %number of modes to kill for kalman (zerofy pertubations)
 ts_controller=1/1000; %[s]
 
-minModalDamp=2*zeta*;
+minModalDamp=2*zeta*(30*2*pi)/1e10;
 
 %shape function and derivative
 psi=Chebypoly(xi,npsi,0,L);
@@ -33,7 +34,7 @@ nc=size(c,1); %number of constraints
 C=null(c,'r');
 %% Calculating Model Matrices
 %Number of base functions for rayligh ritz
-[Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
+[Gama,Lambda,PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 g=9.81;
 Fg=double(int(-g*rho*A*psi,xi,0,L));
@@ -55,28 +56,21 @@ dpsi_L=double(subs(dpsi,L));
 
 %Continous system:
 %measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
+E=1.1*E; %lie for kalman filter! :)
+[kGama,kLambda,kPHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
+
 nk=npsi-nc;
 
-kalman_A_full=[zeros(nk), eye(nk);
-        -Lambda, -Gama];
-kalman_B_full=[zeros(nk);eye(nk)];
-kalman_C_full=[psi_0'*C*s_PHI*[eye(nk),zeros(nk)];
-    dpsi_Ldiv8'*C*s_PHI*[eye(nk),zeros(nk)]];
-kalman_D_full=zeros(2,nk);
-kalman_sys_full=ss(kalman_A_full,kalman_B_full,kalman_C_full,kalman_D_full);
-disp(tf(kalman_sys_full)); %<--- from here we learn of the pure integration mode, wr=0
-
-% nk=nk-1; %remove pure integration mode to enable matlab's kalman filter
-% kalman_A=[zeros(nk), eye(nk);
-%         -Lambda(2:end,2:end), -Gama(2:end,2:end)];
-% kalman_B=[zeros(nk);eye(nk)];
-% kalman_C=[psi_0'*C*s_PHI(:,2:end)*[eye(nk),zeros(nk)];
-%     dpsi_Ldiv8'*C*s_PHI(:,2:end)*[eye(nk),zeros(nk)]];
-% kalman_D=zeros(2,nk);
-% kalman_sys=ss(kalman_A,kalman_B,kalman_C,kalman_D);
+kalman_A=[zeros(nk), eye(nk);
+        -kLambda, -kGama];
+kalman_B=[zeros(nk);eye(nk)];
+kalman_C=[psi_0'*C*kPHI*[eye(nk),zeros(nk)];
+    dpsi_Ldiv8'*C*kPHI*[eye(nk),zeros(nk)]];
+kalman_D=zeros(size(kalman_C,1),nk);
+kalman_sys=ss(kalman_A,kalman_B,kalman_C,kalman_D);
 
 %minimal realization and make it discrete
-d_kalman_sys=c2d(kalman_sys_full,ts_controller);
+d_kalman_sys=c2d(kalman_sys,ts_controller);
 
 kmr_A=d_kalman_sys.A;
 kmr_B=d_kalman_sys.B;
@@ -100,7 +94,7 @@ assignin(mdlWks,'L',L);
 %Dynamics
 assignin(mdlWks,'ts_controller',ts_controller); 
 assignin(mdlWks,'C',C);
-assignin(mdlWks,'PHI',s_PHI);
+assignin(mdlWks,'PHI',PHI);
 assignin(mdlWks,'Lambda',Lambda);
 assignin(mdlWks,'Gama',Gama);
 
@@ -127,6 +121,8 @@ assignin(mdlWks,'eta0',eta0);
 assignin(mdlWks,'npsi',npsi);
 assignin(mdlWks,'nc',nc);
 assignin(mdlWks,'nk',nk);
+assignin(mdlWks,'nk',nk);
+
 %% need to write down manualy:
 proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;
@@ -152,7 +148,11 @@ wrMat(1:length(wr),npsi)=wr;
 s_wr=abs(s_wr'); %abs or real?
 s_PHI=PHI(:,Indx); %PHI to work with
 
-damping=max(2*zeta*s_wr,minModalDamp);
+%minModalDamp is important as without it we have a pure generalized forces integration mode.
+%which matlab can't handle in the kalman filter.
+%We could either do this or change the shape function prehaps? this seems
+%better
+damping=max(2*zeta*s_wr,minModalDamp); 
 Gama=diag(damping);
 Lambda=diag(s_wr.^2);
 end
