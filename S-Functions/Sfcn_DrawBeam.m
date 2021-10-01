@@ -34,7 +34,7 @@ block.InputPort(3).DataTypeId     =-1;
 block.InputPort(3).Dimensions     =1;
 block.InputPort(3).SamplingMode   ='Sample';
 
-dtDraw=1/100;
+dtDraw=1/25;
 block.SampleTimes = [dtDraw 0]; %[discrete time, offset]
 
 %specify block simStateCompliace

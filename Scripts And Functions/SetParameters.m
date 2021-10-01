@@ -1,3 +1,4 @@
+function SetParameters()
 %% Initalize 
 syms xi real
 L=3; %m
@@ -56,8 +57,10 @@ dpsi_L=double(subs(dpsi,L));
 
 %Continous system:
 %measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
-E=1*E; %lie for kalman filter! :)
-A=1*A; %lie for kalman filter! :)
+E=1.2*E; %lie for kalman filter! :)
+A=0.8*A; %lie for kalman filter! :)
+rho=0.8*rho;
+zeta=0.8*zeta;
 [kGama,kLambda,kPHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 nk=npsi-nc;
@@ -80,8 +83,8 @@ kmr_D=d_kalman_sys.D;
 
 Nw=size(kmr_A,2); %amount of values in state
 Ny=size(kmr_C,1); %measurements size
-kmr_Q = eye(Nw,Nw); %process covaraince matrix
-kmr_R = eye(Ny); %measurement covariance matrix
+kmr_Q = 1*eye(Nw,Nw); %process covaraince matrix
+kmr_R = 1*eye(Ny); %measurement covariance matrix
 kmr_N = zeros(Nw,Ny);%noise cross covaraince matrix, between process and measurement noise
 
 eta0=zeros(Nw,1);
@@ -127,7 +130,7 @@ assignin(mdlWks,'nkill4kalman',nkill4kalman);
 proj = matlab.project.rootProject;
 rootFolder=proj.RootFolder;
 f_psi=matlabFunction(psi,'File',fullfile(rootFolder,'Scripts And Functions','computePsi')); %to drawing Sfcn
-
+end
 function [Gama,Lambda,s_PHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp)
 K=double(E*int(I*(ddpsi*ddpsi'),0,L));
 M=double(rho*int(A*(psi*psi'),0,L));
