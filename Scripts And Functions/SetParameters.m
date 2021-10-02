@@ -56,11 +56,13 @@ dpsi_L=double(subs(dpsi,L));
 %xdot= [etadot(2:end), etaddot(2:end)]'
 
 %Continous system:
-%measurement y_hat - theta_dot(xi=0,t) where theta=w', w is displacement
-E=1.2*E; %lie for kalman filter! :)
-A=0.8*A; %lie for kalman filter! :)
-rho=0.8*rho;
-zeta=0.8*zeta;
+%measurement y_hat - [w(0),theta(L/8)]
+
+%lie for kalman filter! :)
+E=1*E; 
+A=1*A; 
+rho=1*rho;
+zeta=1*zeta;
 [kGama,kLambda,kPHI]=CalcualteMatrices(psi,dpsi,ddpsi,L,E,I,A,rho,zeta,npsi,C,minModalDamp);
 
 nk=npsi-nc;
